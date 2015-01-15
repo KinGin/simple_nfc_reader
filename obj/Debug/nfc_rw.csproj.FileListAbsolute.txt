@@ -1,0 +1,14 @@
+C:\Users\KinGin\Documents\Dippa\Koodi\NFC\hommat_toimii_kokoelma\nfc_rw\nfc_rw\bin\Debug\nfc_rw.exe.config
+C:\Users\KinGin\Documents\Dippa\Koodi\NFC\hommat_toimii_kokoelma\nfc_rw\nfc_rw\bin\Debug\DLLs\GS.Apdu.dll
+C:\Users\KinGin\Documents\Dippa\Koodi\NFC\hommat_toimii_kokoelma\nfc_rw\nfc_rw\bin\Debug\DLLs\GS.CSharpPCSC.dll
+C:\Users\KinGin\Documents\Dippa\Koodi\NFC\hommat_toimii_kokoelma\nfc_rw\nfc_rw\bin\Debug\DLLs\GS.HexLibrary.dll
+C:\Users\KinGin\Documents\Dippa\Koodi\NFC\hommat_toimii_kokoelma\nfc_rw\nfc_rw\bin\Debug\DLLs\NdefLibrary.dll
+C:\Users\KinGin\Documents\Dippa\Koodi\NFC\hommat_toimii_kokoelma\nfc_rw\nfc_rw\bin\Debug\nfc_rw.exe
+C:\Users\KinGin\Documents\Dippa\Koodi\NFC\hommat_toimii_kokoelma\nfc_rw\nfc_rw\bin\Debug\nfc_rw.pdb
+C:\Users\KinGin\Documents\Dippa\Koodi\NFC\hommat_toimii_kokoelma\nfc_rw\nfc_rw\bin\Debug\GS.Apdu.dll
+C:\Users\KinGin\Documents\Dippa\Koodi\NFC\hommat_toimii_kokoelma\nfc_rw\nfc_rw\bin\Debug\GS.CSharpPCSC.dll
+C:\Users\KinGin\Documents\Dippa\Koodi\NFC\hommat_toimii_kokoelma\nfc_rw\nfc_rw\bin\Debug\GS.HexLibrary.dll
+C:\Users\KinGin\Documents\Dippa\Koodi\NFC\hommat_toimii_kokoelma\nfc_rw\nfc_rw\bin\Debug\NdefLibrary.dll
+C:\Users\KinGin\Documents\Dippa\Koodi\NFC\hommat_toimii_kokoelma\nfc_rw\nfc_rw\obj\Debug\nfc_rw.csprojResolveAssemblyReference.cache
+C:\Users\KinGin\Documents\Dippa\Koodi\NFC\hommat_toimii_kokoelma\nfc_rw\nfc_rw\obj\Debug\nfc_rw.exe
+C:\Users\KinGin\Documents\Dippa\Koodi\NFC\hommat_toimii_kokoelma\nfc_rw\nfc_rw\obj\Debug\nfc_rw.pdb
