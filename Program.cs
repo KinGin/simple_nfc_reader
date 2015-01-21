@@ -9,7 +9,7 @@ using GS.SCard;
 using GS.SCard.Const;
 using GS.Util.Hex;
 using System.Diagnostics;
-using NdefLibrary;
+using NdefLibrary.Ndef;
 
 namespace nfc_rw
 {
@@ -17,8 +17,10 @@ namespace nfc_rw
     {
         static Dictionary<String, String> APDU_commands = new Dictionary<string, string>(){
             {"get_card_uid","FF CA 00 00 00"},
-            {"read_binary_blocks","FF B0 00 00 10"} //last two bytes = 1. block to start reading. 2. How many bytes to read
-            };
+            {"read_first_binary_blocks","FF B0 00 07 10"},//NDEF RECORD STARTS AT 7 O'Block 
+            {"read_binary_blocks","FF B0 00 0B 02"}, //last two bytes = 1. block to start reading. 2. How many bytes to read
+            {"read_all_memory_content", "FF B0 00 0C 10" }
+        };
 
         static void Main(string[] args)
         {
@@ -26,6 +28,11 @@ namespace nfc_rw
             Trace.Listeners.Add(consoleTraceListener);
 
             PCSCReader reader = new PCSCReader();
+            NdefLibrary.Ndef.NdefMessage message = new NdefLibrary.Ndef.NdefMessage();
+
+            byte[] whole_NFC;
+
+
             string input_text = "";
             while (input_text != "joo")
             {
@@ -41,12 +48,50 @@ namespace nfc_rw
                         Console.WriteLine("UID  = 0x" + HexFormatting.ToHexString(respApdu.Data, true));
                     }
 
-                    RespApdu testi = reader.Exchange(APDU_commands["read_binary_blocks"]);
+                    RespApdu testi = reader.Exchange(APDU_commands["read_first_binary_blocks"]);
                     if (testi.SW1SW2 == 0x9000)
                     {
                         Console.WriteLine("Binary_data  = 0x" + HexFormatting.ToHexString(testi.Data, true));
                     }
 
+
+
+                     RespApdu testi2 = reader.Exchange(APDU_commands["read_binary_blocks"]);
+                     if (testi2.SW1SW2 == 0x9000)
+                     {
+                         Console.WriteLine("Binary_data  = 0x" + HexFormatting.ToHexString(testi2.Data, true));
+                     }
+                    whole_NFC = new byte[testi.Data.Length + testi2.Data.Length];
+                    System.Buffer.BlockCopy(testi.Data, 0, whole_NFC, 0, testi.Data.Length);
+                    System.Buffer.BlockCopy(testi2.Data, 0, whole_NFC, testi.Data.Length, testi2.Data.Length);
+                    message = NdefLibrary.Ndef.NdefMessage.FromByteArray(whole_NFC);
+                    
+                    
+                    
+                    foreach (NdefRecord record in message)
+                    {
+                        Console.WriteLine(" Hurraa :DDDD");
+                        Console.WriteLine("Record type: " + Encoding.UTF8.GetString(record.Type, 0, record.Type.Length));
+                        var uriRecord = new NdefUriRecord(record);
+                        Debug.WriteLine("URI: " + uriRecord.Uri);
+                    }
+
+                    /** 
+                     * 
+                     RespApdu testi3 = reader.Exchange(APDU_commands["read_all_memory_content"]);
+                     if (testi3.SW1SW2 == 0x9000)
+                     {
+                         Console.WriteLine("Binary_data  = 0x" + HexFormatting.ToHexString(testi3.Data, true));
+                     }*/
+
+                    /*whole_NFC = new byte[testi.Data.Length + testi2.Data.Length + testi3.RespLength];
+                    System.Buffer.BlockCopy(testi.Data, 0, whole_NFC, 0, testi.Data.Length);
+                    System.Buffer.BlockCopy(testi2.Data, 0, whole_NFC, testi.Data.Length, testi2.Data.Length);
+                    System.Buffer.BlockCopy(testi3.Data, 0, whole_NFC, testi.Data.Length + testi2.Data.Length, testi3.Data.Length);
+
+                    message = NdefLibrary.Ndef.NdefMessage.FromByteArray(whole_NFC);
+                    Console.WriteLine(message.GetType());*/
+                    
                 }
                 catch (WinSCardException ex)
                 {
