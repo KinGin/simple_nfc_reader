@@ -42,6 +42,7 @@ using GS.SCard.Const;
 using GS.Util.Hex;
 using System.Diagnostics;
 using NdefLibrary.Ndef;
+using System.Collections;
 
 
 
@@ -52,7 +53,8 @@ namespace nfc_rw
 
         static Dictionary<String, String> APDU_commands = new Dictionary<string, string>(){
             {"get_card_uid","FF CA 00 00 00"},
-            {"read_first_binary_blocks","FF B0 00 07 10"},//NDEF RECORD STARTS AT 7 O'Block 
+            {"read_first_binary_blocks","FF B0 00 05 10"},
+            //{"read_first_binary_blocks","FF B0 00 07 10"},//NDEF RECORD STARTS AT 7 O'Block 
             {"read_binary_blocks","FF B0 00 0B 02"}, //last two bytes = 1. block to start reading. 2. How many bytes to read
             {"read_all_memory_content", "FF B0 00 0C 10" }
         };
@@ -60,7 +62,6 @@ namespace nfc_rw
 
         static void parse_record(NdefMessage ndefMessage)
         {
-
             //NdefRecord found_record;
 
             foreach (NdefRecord record in ndefMessage)
@@ -116,6 +117,7 @@ namespace nfc_rw
                 try
                 {
                     reader.Connect();
+                    //reader.Connect();
                     reader.ActivateCard();
 
                     RespApdu respApdu = reader.Exchange(APDU_commands["get_card_uid"]); // Get Card UID ...
@@ -131,18 +133,62 @@ namespace nfc_rw
                         Console.WriteLine("Binary_data  = 0x" + HexFormatting.ToHexString(testi.Data, true));
                     }
 
+                    RespApdu spurdo;
+                    int bytenum = 0;
+                    var allbytes = new List<string>();
+                    var hexbytes = new List<byte>();
+
+                    while (true)
+                    {
+                        int value = Convert.ToInt32(bytenum);
+                        String Hex_address = String.Format("{0:X}", value);
+                        if (bytenum < 16)
+                        {
+                            Hex_address = "0" + Hex_address;
+                        }
+
+                        String command = "FF B0 00 " + Hex_address +" 04";
+                        Console.WriteLine(command);
+                        spurdo = reader.Exchange(command);
+                        allbytes.Add(HexFormatting.ToHexString(spurdo.Data, true));
+                        hexbytes.AddRange(spurdo.Data);
+
+                        if (HexFormatting.ToHexString(spurdo.Data, true).Contains("FE"))
+                        {
+                            Console.WriteLine("End of NDEF found");
+                            break;
+                        }
+                        bytenum = bytenum + 1;
+                    }
+
+                    foreach (Object obj in hexbytes)
+                        Console.Write("   {0}", String.Format("{0:X}", obj));
+                    Console.WriteLine();
+
+                    for (int i = 0; i < hexbytes.Count; i++)
+                    {
+                        //This IS D1 in hex. It starts NDEF tags
+                        if (hexbytes[i] == 209)
+                        {
+                           hexbytes.RemoveRange(0, i);
+                        }
+                        else if (hexbytes[i] == 254)
+                        {
+                            //hexbytes.RemoveRange(i, hexbytes.Count);
+                            break;
+                        }
+                    }
 
 
-                     RespApdu testi2 = reader.Exchange(APDU_commands["read_binary_blocks"]);
+                     /*RespApdu testi2 = reader.Exchange(APDU_commands["read_binary_blocks"]);
                      if (testi2.SW1SW2 == 0x9000)
                      {
                          Console.WriteLine("Binary_data  = 0x" + HexFormatting.ToHexString(testi2.Data, true));
                      }
                     whole_NFC = new byte[testi.Data.Length + testi2.Data.Length];
                     System.Buffer.BlockCopy(testi.Data, 0, whole_NFC, 0, testi.Data.Length);
-                    System.Buffer.BlockCopy(testi2.Data, 0, whole_NFC, testi.Data.Length, testi2.Data.Length);
-                    message = NdefLibrary.Ndef.NdefMessage.FromByteArray(whole_NFC);
-
+                    System.Buffer.BlockCopy(testi2.Data, 0, whole_NFC, testi.Data.Length, testi2.Data.Length);*/
+                    message = NdefLibrary.Ndef.NdefMessage.FromByteArray(hexbytes.ToArray());
                     parse_record(message);
                     
                    /* foreach (NdefRecord record in message)
