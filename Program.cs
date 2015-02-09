@@ -59,8 +59,21 @@ namespace nfc_rw
             {"get_card_uid","FF CA 00 00 00"},
             {"read_binary_blocks","FF B0 00 00 04"}, //last two bytes = 1. block to start reading. 2. How many bytes to read
             //{"set_target_mode", "D4 8C 00"}
-            //The fuck is this command?
-            {"set_target_mode", "FF, 00, 00, 00, 27, D4, 8C, 05, 04, 00, 12, 34, 56, 20, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00"}
+            
+            //Pseudo APDUS. These are used for: 
+            //Exchanging data with Non-PC/SC compliant tags
+            //Retrieving and setting reader parameters - So we are trying to activate the "Connect as target and wait for initiators" here
+            //Send through PICC interface if the tag is connected or through Escape command if not
+            {"direct_command_prefix", "FF 00 00 00 {0} {1}"}, //{0} is the number of bytes to send, {1} is the payload
+            {"get_picc_operating_parameter","FF 00 50 00 00"},
+
+            //This set of commands is used for communicating with Smartphone chips
+            {"Tg_Init_as_target", "FF 00 00 00 D4 8C 00" }, //It only took 102839 years to get here but here it is
+            {"Receive_data_from_initiator", "FF 00 00 00 D4 86" },
+            {"Send_data_to_initiator", "FF 00 00 00 D4 8E {0}" }, // {0} Data to be sent
+
+            //legend has it that this command gets the android data
+            {"set_target_mode", "FF 00 00 00 27 D4 8C 05 04 00 12 34 56 20 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00"}
         };
 
         /* <summary>
@@ -198,16 +211,41 @@ namespace nfc_rw
             return hexbytes.ToArray();
         }
 
-        static byte[] set_target_mode()
+        static void set_() { }
+
+
+        static void set_target_mode()
         {
-            RespApdu respApdu = reader.Exchange(APDU_commands["set_target_mode"]);
-            if (respApdu.SW1SW2 != 0x9000)
-            {
-                Console.WriteLine("What does this all mean?: ", HexFormatting.ToHexString(respApdu.Data, true));
-            }
-            return respApdu.Data;
+            /*RespApdu hassu = reader.Exchange(APDU_commands["get_picc_operating_parameter"]);
+            Console.WriteLine("PiCC operating parameter", HexFormatting.ToHexString(hassu.Data, true));
+            
+            RespApdu massu = reader.Exchange(APDU_commands["get_picc_operating_parameter"]);
+            Console.WriteLine("PiCC sdoperating parameter", HexFormatting.ToHexString(massu.Data, true));
+            */
+            RespApdu tassu = reader.Exchange(String.Format(APDU_commands["direct_command_prefix"], "02", "D4 56 00 02 00 00 FF FF 00 00"));
+            Console.WriteLine("THIS IS THE INITIATOR MODE: RAAA:  ", HexFormatting.ToHexString(tassu.Data, true));
+            //if (tassu.SW1SW2 != 0x9000)
+            //{
+            //Console.WriteLine("What does this all mean?: ", HexFormatting.ToHexString(tassu.Data, true));
+            //}
+
+            /*RespApdu respApdu = reader.Exchange(APDU_commands["set_target_mode"]);
+            
+            Console.WriteLine("What does this all mean?: ", HexFormatting.ToHexString(respApdu.Data, true));*/
+            
         }
 
+        // You only have to call this once and it wil be forever
+        // There appears to be no "get buzzer state" apdu
+        static void buzzer_off()
+        {
+            RespApdu tassu = reader.Exchange("FF 00 52 00 00");
+        }
+
+        static void buzzer_on()
+        {
+            RespApdu tassu = reader.Exchange("FF 00 52 00 FF");
+        }
 
         static void Main(string[] args)
         {
@@ -222,8 +260,14 @@ namespace nfc_rw
             {
                 try
                 {
+
+                    //reader.SCard.Connect("",SCARD_SHARE_MODE.Direct, SCARD_PROTOCOL.Tx);
                     reader.Connect();
+                    //set_target_mode();
+                    //buzzer_off();
+
                     reader.ActivateCard(SCARD_SHARE_MODE.Direct, SCARD_PROTOCOL.Tx);
+                    
                     
 
                     RespApdu respApdu = reader.Exchange(APDU_commands["get_card_uid"]); // Get Card UID ...
@@ -233,9 +277,12 @@ namespace nfc_rw
                         Console.WriteLine("UID  = 0x" + HexFormatting.ToHexString(respApdu.Data, true));
                     }
 
-                    message = NdefLibrary.Ndef.NdefMessage.FromByteArray(find_ndef());
-                    //message = NdefLibrary.Ndef.NdefMessage.FromByteArray(set_target_mode());
-                    parse_record(message);
+                    RespApdu tespApdu = reader.Exchange(String.Format(APDU_commands["direct_command_prefix"],"18", "D4 86 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00")); // Get Card UID ...
+                    RespApdu bespApdu = reader.Exchange(String.Format(APDU_commands["direct_command_prefix"], "18", "D4 40 01 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00")); // Get Card UID ...
+
+                    //message = NdefLibrary.Ndef.NdefMessage.FromByteArray();
+                    //message = NdefLibrary.Ndef.NdefMessage.FromByteArray(find_ndef());
+                    //parse_record(message);
                 }
                 catch (WinSCardException ex)
                 {
