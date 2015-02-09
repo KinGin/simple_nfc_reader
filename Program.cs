@@ -52,12 +52,15 @@ namespace nfc_rw
 
         private static PCSCReader reader; 
 
+        //Dictionary holding APDU commmands
+        //Not all of these are used in this
+        //program but I left them intact for future use
         static Dictionary<String, String> APDU_commands = new Dictionary<string, string>(){
             {"get_card_uid","FF CA 00 00 00"},
-            {"read_first_binary_blocks","FF B0 00 05 10"},
-            //{"read_first_binary_blocks","FF B0 00 07 10"},//NDEF RECORD STARTS AT 7 O'Block 
-            {"read_binary_blocks","FF B0 00 0B 02"}, //last two bytes = 1. block to start reading. 2. How many bytes to read
-            {"read_all_memory_content", "FF B0 00 0C 10" }
+            {"read_binary_blocks","FF B0 00 00 04"}, //last two bytes = 1. block to start reading. 2. How many bytes to read
+            //{"set_target_mode", "D4 8C 00"}
+            //The fuck is this command?
+            {"set_target_mode", "FF, 00, 00, 00, 27, D4, 8C, 05, 04, 00, 12, 34, 56, 20, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00"}
         };
 
         /* <summary>
@@ -150,6 +153,10 @@ namespace nfc_rw
                 }
 
                 //We start from block 0 byte 0
+                //Reading command: "FF B0 00 XX YY"
+                //XX is reading address
+                //YY is amount of bytes to read
+                //Distance between each XX is 04
                 command = "FF B0 00 " + Hex_address + " 04";
 
                 read_four_bytes = reader.Exchange(command);
@@ -191,6 +198,16 @@ namespace nfc_rw
             return hexbytes.ToArray();
         }
 
+        static byte[] set_target_mode()
+        {
+            RespApdu respApdu = reader.Exchange(APDU_commands["set_target_mode"]);
+            if (respApdu.SW1SW2 != 0x9000)
+            {
+                Console.WriteLine("What does this all mean?: ", HexFormatting.ToHexString(respApdu.Data, true));
+            }
+            return respApdu.Data;
+        }
+
 
         static void Main(string[] args)
         {
@@ -206,7 +223,8 @@ namespace nfc_rw
                 try
                 {
                     reader.Connect();
-                    reader.ActivateCard();
+                    reader.ActivateCard(SCARD_SHARE_MODE.Direct, SCARD_PROTOCOL.Tx);
+                    
 
                     RespApdu respApdu = reader.Exchange(APDU_commands["get_card_uid"]); // Get Card UID ...
 
@@ -216,6 +234,7 @@ namespace nfc_rw
                     }
 
                     message = NdefLibrary.Ndef.NdefMessage.FromByteArray(find_ndef());
+                    //message = NdefLibrary.Ndef.NdefMessage.FromByteArray(set_target_mode());
                     parse_record(message);
                 }
                 catch (WinSCardException ex)
