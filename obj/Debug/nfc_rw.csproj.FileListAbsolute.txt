@@ -40,3 +40,17 @@ E:\Git\nfc_reader_dippa\simple_nfc_reader\bin\Debug\GS.HexLibrary.dll
 E:\Git\nfc_reader_dippa\simple_nfc_reader\bin\Debug\NdefLibrary.dll
 E:\Git\nfc_reader_dippa\simple_nfc_reader\obj\Debug\nfc_rw.exe
 E:\Git\nfc_reader_dippa\simple_nfc_reader\obj\Debug\nfc_rw.pdb
+\\intra.tut.fi\home\jarvi9\My Documents\Dippa\Koodi\NFC\hommat_toimii_kokoelma\nfc_rw\nfc_rw\bin\Debug\nfc_rw.exe.config
+\\intra.tut.fi\home\jarvi9\My Documents\Dippa\Koodi\NFC\hommat_toimii_kokoelma\nfc_rw\nfc_rw\obj\Debug\nfc_rw.exe
+\\intra.tut.fi\home\jarvi9\My Documents\Dippa\Koodi\NFC\hommat_toimii_kokoelma\nfc_rw\nfc_rw\obj\Debug\nfc_rw.pdb
+\\intra.tut.fi\home\jarvi9\My Documents\Dippa\Koodi\NFC\hommat_toimii_kokoelma\nfc_rw\nfc_rw\bin\Debug\DLLs\GS.Apdu.dll
+\\intra.tut.fi\home\jarvi9\My Documents\Dippa\Koodi\NFC\hommat_toimii_kokoelma\nfc_rw\nfc_rw\bin\Debug\DLLs\GS.CSharpPCSC.dll
+\\intra.tut.fi\home\jarvi9\My Documents\Dippa\Koodi\NFC\hommat_toimii_kokoelma\nfc_rw\nfc_rw\bin\Debug\DLLs\GS.HexLibrary.dll
+\\intra.tut.fi\home\jarvi9\My Documents\Dippa\Koodi\NFC\hommat_toimii_kokoelma\nfc_rw\nfc_rw\bin\Debug\DLLs\NdefLibrary.dll
+\\intra.tut.fi\home\jarvi9\My Documents\Dippa\Koodi\NFC\hommat_toimii_kokoelma\nfc_rw\nfc_rw\bin\Debug\nfc_rw.exe
+\\intra.tut.fi\home\jarvi9\My Documents\Dippa\Koodi\NFC\hommat_toimii_kokoelma\nfc_rw\nfc_rw\bin\Debug\nfc_rw.pdb
+\\intra.tut.fi\home\jarvi9\My Documents\Dippa\Koodi\NFC\hommat_toimii_kokoelma\nfc_rw\nfc_rw\bin\Debug\GS.Apdu.dll
+\\intra.tut.fi\home\jarvi9\My Documents\Dippa\Koodi\NFC\hommat_toimii_kokoelma\nfc_rw\nfc_rw\bin\Debug\GS.CSharpPCSC.dll
+\\intra.tut.fi\home\jarvi9\My Documents\Dippa\Koodi\NFC\hommat_toimii_kokoelma\nfc_rw\nfc_rw\bin\Debug\GS.HexLibrary.dll
+\\intra.tut.fi\home\jarvi9\My Documents\Dippa\Koodi\NFC\hommat_toimii_kokoelma\nfc_rw\nfc_rw\bin\Debug\NdefLibrary.dll
+\\intra.tut.fi\home\jarvi9\My Documents\Dippa\Koodi\NFC\hommat_toimii_kokoelma\nfc_rw\nfc_rw\obj\Debug\nfc_rw.csprojResolveAssemblyReference.cache
