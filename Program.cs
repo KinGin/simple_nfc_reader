@@ -61,6 +61,7 @@ namespace nfc_rw
         static Dictionary<String, String> APDU_commands = new Dictionary<string, string>(){
             {"get_card_uid","FF CA 00 00 00"},
             {"read_binary_blocks","FF B0 00 00 04"}, //last two bytes = 1. block to start reading. 2. How many bytes to read
+            {"update_binary_blocks","FF D6 00 00 04 {0}"}, //last 3 bytes = 1. block to start reading. 2. How many bytes to read, bytes in
             
             //############# Pseudo APDUS #############  
             //These are used for: 
@@ -156,7 +157,9 @@ namespace nfc_rw
             RespApdu read_four_bytes;
             int byte_num = 0;
             String command;
-            
+            String Hex_address;
+            int value;
+
             var allbytes = new List<string>();
 
             //Used for easy appending of all found bytes
@@ -165,8 +168,8 @@ namespace nfc_rw
 
             while (true)
             {
-                int value = Convert.ToInt32(byte_num);
-                String Hex_address = String.Format("{0:X}", value);
+                value = Convert.ToInt32(byte_num);
+                Hex_address = String.Format("{0:X}", value);
                 
                 //RespApdu only accepts commands that are of type
                 //"XX XX XX XX XX" so zero has to be prepended
@@ -186,7 +189,7 @@ namespace nfc_rw
                 read_four_bytes = reader.Exchange(command);
                 if (read_four_bytes.SW1SW2 != 0x9000)
                 {
-                    Console.WriteLine("Reading bytes from the NFC tag failed. reader returnerd: ", HexFormatting.ToHexString(read_four_bytes.Data, true));
+                    Console.WriteLine("Reading bytes from the NFC tag failed. reader returned: ", HexFormatting.ToHexString(read_four_bytes.Data, true));
                     break;
                 }
                 
@@ -222,6 +225,86 @@ namespace nfc_rw
             return hexbytes.ToArray();
         }
 
+        static void write_to_tag(String bytes_in)
+        {
+            string command = "FF D6 00 ";
+            int byte_num = 0;
+            int value;
+            //string address = String.Format("{0:X}", value);
+            String Hex_address;
+
+            Byte[] Input_bytes = hex_string_to_byte_array(string_to_hex_string(bytes_in));
+            byte[] send_chunk = new byte[4];
+
+            RespApdu write_four_bytes;
+
+            /*if (Input_bytes.Length % 4 != 0)
+            {
+                int mod_of_input = Input_bytes.Length % 4;
+                for (int i = 0; i < mod_of_input; i++)
+                {
+                    
+
+                }
+            }*/
+
+
+            for (int i = 0; i < Input_bytes.Length; i = i + 4)
+            {
+                for (int j = 0; j < 4; j++)
+                {
+                    if (j + i < Input_bytes.Length)
+                    {
+                        send_chunk[j] = Input_bytes[j + i];
+                    }
+                }
+
+                value = Convert.ToInt32(byte_num);
+                Hex_address = String.Format("{0:X}", value);
+                command = command + Hex_address + " 04 " + HexFormatting.ToHexString(send_chunk, true);
+                write_four_bytes = reader.Exchange(command);
+                byte_num = byte_num + 1;
+            }
+        }
+
+
+        static byte[] hex_string_to_byte_array(String hex_string)
+        {
+              int NumberChars = hex_string.Length;
+              byte[] bytes = new byte[NumberChars / 2];
+              for (int i = 0; i < NumberChars; i += 2)
+                bytes[i / 2] = Convert.ToByte(hex_string.Substring(i, 2), 16);
+              return bytes;
+        }
+
+        static string string_to_hex_string(string input)
+        {
+            byte[] temp = Encoding.Default.GetBytes(input);
+            var hexString = BitConverter.ToString(temp);
+            hexString = hexString.Replace("-", " ");
+            return hexString;
+        }
+
+
+        static List<byte[]> splitted_array(byte[] array, int lengthToSplit)
+        {
+            List<byte[]> splitted = new List<byte[]>();//This list will contain all the splitted arrays.
+
+            int arrayLength = array.Length;
+
+            for (int i = 0; i < arrayLength; i = i + lengthToSplit)
+            {
+                Byte[] val = new Byte[lengthToSplit];
+
+                if (arrayLength < i + lengthToSplit)
+                {
+                    lengthToSplit = arrayLength - i;
+                }
+                Array.Copy(array, i, val, 0, lengthToSplit);
+                splitted.Add(val);
+            }
+            return splitted;
+        }
 
 
         static void set_initiator_mode() 
@@ -234,8 +317,17 @@ namespace nfc_rw
 
         static void set_target_mode()
         {
-            RespApdu tassu = reader.Exchange(String.Format(APDU_commands["direct_command_prefix"], "02", "D4 56 00 02 00 00 FF FF 00 00"));
-            Console.WriteLine("Joo eli:  ", HexFormatting.ToHexString(tassu.Data, true));   
+            byte[] rbuffer = null;
+
+            //byte[] sbuffer = {0xFF, 0x00, 0x00, 0x00, 0x0A, 0xD4, 0x56, 0x01, 0x02, 0x00, 0x00, 0xFF, 0xFF, 0x00, 0x00};
+            byte[] sbuffer = {0xFF, 0x00, 0x00, 0x00, 0x33, 0xD4, 0x8C, 0x02, 0x00, 0x00, 0x00, 0x00, 0x00, 0x40, 0x01, 0xFE, 0x0F, 0xBB, 0xBA, 0xA6, 0xC9, 0x89, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xFF, 0xFF, 0x01, 0xFE, 0x0F, 0xBB, 0xBA, 0xA6, 0xC9, 0x89, 0x00, 0x00, 0x0F, 0x46, 0x66, 0x6D, 0x01, 0x01, 0x10, 0x03, 0x02, 0x00, 0x01, 0x04, 0x01, 0x96};
+            //sbuffer = new Byte[0xFF0000000AD45600020000FFFF0000];
+
+            reader.Exchange(sbuffer);
+
+            Console.WriteLine("Juma", rbuffer.Length);
+            //RespApdu tassu = reader.Exchange(String.Format(APDU_commands["direct_command_prefix"], "0A", "D4 56 00 02 00 00 FF FF 00 00"));
+            //Console.WriteLine("Joo eli:  ", HexFormatting.ToHexString(rbuffer, true));
         }
 
         // You only have to call these once to affect the whole session(until reader is unplugged)
@@ -254,12 +346,24 @@ namespace nfc_rw
         {
             //Buzzer Control
             //set_buzzer_off();
-            set_buzzer_on();
+            //set_buzzer_on();
 
             //The mode of the reader
-            set_initiator_mode();
-            //set_target_mode();
+            //set_initiator_mode();
+            set_target_mode();
 
+        }
+
+        // Command for reading at active or init_as_passive
+        //# NOT WORKING
+        static void readstuff()
+        {
+
+             while (true)
+	         {
+	            byte[] sbuffer = {0xFF, 0x00, 0x00, 0x00, 0x02, 0xD4, 0x86 };
+	         }
+             
         }
 
         static void Main(string[] args)
@@ -283,7 +387,7 @@ namespace nfc_rw
                     //set_buzzer_on();
                     //set_target_mode();
                     
-                    reader.ActivateCard(SCARD_SHARE_MODE.Direct, SCARD_PROTOCOL.Tx);
+                    reader.ActivateCard();
 
                     //For some reason Direct commands only work after card has been activated (the command above)
                     //Also the reader resets to normal state after it's been unplugged.
@@ -291,7 +395,7 @@ namespace nfc_rw
                     if (!modes_changed)
                     {
                         //Console.WriteLine("YOLOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOO");
-                        change_modes_for_reader();
+                        //change_modes_for_reader();
                         modes_changed = true;
                     }
                     
@@ -306,8 +410,10 @@ namespace nfc_rw
                     //RespApdu bespApdu = reader.Exchange(String.Format(APDU_commands["direct_command_prefix"], "18", "D4 40 01 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00")); // Get Card UID ...
 
                     //message = NdefLibrary.Ndef.NdefMessage.FromByteArray();
-                    message = NdefLibrary.Ndef.NdefMessage.FromByteArray(find_ndef());
-                    parse_record(message);
+                    //message = NdefLibrary.Ndef.NdefMessage.FromByteArray(find_ndef());
+                    //parse_record(message);
+
+                    write_to_tag("meloonis");
                 }
                 catch (WinSCardException ex)
                 {
