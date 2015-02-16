@@ -24,7 +24,6 @@
  * The UID of the card tells basic information about what type of card it is:
  * //FIXME MORE DETAIL
  * 
- * I'm not sure if this is really the best way to do these
  * 
  * 
  */
@@ -230,14 +229,24 @@ namespace nfc_rw
             string command = "FF D6 00 ";
             int byte_num = 0;
             int value;
+
+            NdefMessage write_this = new NdefMessage();
             //string address = String.Format("{0:X}", value);
             String Hex_address;
 
-            Byte[] Input_bytes = hex_string_to_byte_array(string_to_hex_string(bytes_in));
+            byte[] ba = Encoding.Default.GetBytes(bytes_in);
+            String hexString = BitConverter.ToString(ba);
+            hexString = hexString.Replace("-", " ");
+            //Byte[] Input_bytes = hex_string_to_byte_array(string_to_hex_string(bytes_in));
             byte[] send_chunk = new byte[4];
 
             RespApdu write_four_bytes;
 
+
+
+            command = command + "04" + " 04 " + hexString;
+            write_four_bytes = reader.Exchange(command);
+           
             /*if (Input_bytes.Length % 4 != 0)
             {
                 int mod_of_input = Input_bytes.Length % 4;
@@ -248,7 +257,7 @@ namespace nfc_rw
                 }
             }*/
 
-
+/*
             for (int i = 0; i < Input_bytes.Length; i = i + 4)
             {
                 for (int j = 0; j < 4; j++)
@@ -264,9 +273,18 @@ namespace nfc_rw
                 command = command + Hex_address + " 04 " + HexFormatting.ToHexString(send_chunk, true);
                 write_four_bytes = reader.Exchange(command);
                 byte_num = byte_num + 1;
-            }
+            }*/
         }
 
+        static void turn_off_antenna()
+        {
+            RespApdu antenna_off = reader.Exchange("FF 00 00 00 04 D4 32 01 00");
+        }
+
+        static void turn_on_antenna()
+        {
+            RespApdu antenna_on = reader.Exchange("FF 00 00 00 04 D4 32 01 01");
+        }
 
         static byte[] hex_string_to_byte_array(String hex_string)
         {
@@ -413,7 +431,9 @@ namespace nfc_rw
                     //message = NdefLibrary.Ndef.NdefMessage.FromByteArray(find_ndef());
                     //parse_record(message);
 
-                    write_to_tag("meloonis");
+                    write_to_tag("mela");
+                    reader.SCard.Disconnect();
+                    turn_off_antenna();
                 }
                 catch (WinSCardException ex)
                 {
