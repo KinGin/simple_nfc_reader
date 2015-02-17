@@ -32,3 +32,5 @@ https://code.google.com/p/ismb-snep-java/
 
 
 http://apps4android.org/nfc-specifications/NFCForum-TS-Type-4-Tag_2.0.pdf
+
+http://nfcpy.readthedocs.org/en/latest/topics/snep.html
