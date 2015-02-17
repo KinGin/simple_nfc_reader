@@ -98,7 +98,7 @@ namespace nfc_rw
             {"read_register","FF000000 08 D406 6305 630D 6338"},
             {"write_register","FF000000 11 D408 6302 80 6303 80 6305 04 630D EF 6338 F7"},
             {"set_params","FF000000 03 D412 30"},
-            {"tg_init","FF000000 27 D48C 05 0400 123456 20 000000000000000000000000000000000000 00000000000000000000 00 00"}, //TGINIT DOES NOT GIVE RESPONSE
+            {"tg_init","FF00000027D48C05040012345620000000000000000000000000000000000000000000000000000000000000"}, //TGINIT DOES NOT GIVE RESPONSE
             {"tg_get_data","FF000000 02 D486"},
             {"tg_set_data","FF000000 {0} D48E {1}"}, //{0} = 2+length of {1}=Command sent from thhe reader
 
@@ -339,7 +339,7 @@ namespace nfc_rw
             direct_command(APDU_commands["read_register"]);
             direct_command(APDU_commands["write_register"]);
             direct_command(APDU_commands["set_params"]);
-            direct_command(APDU_commands["Tg_Init_as_target"]);
+            direct_command(APDU_commands["tg_init"]);
 
             while (true)
             {
