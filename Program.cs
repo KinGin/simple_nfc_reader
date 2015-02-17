@@ -58,6 +58,10 @@ namespace nfc_rw
         //Not all of these are used in this
         //program but I left them intact for future use
         static Dictionary<String, String> APDU_commands = new Dictionary<string, string>(){
+            
+            //These work with reader.Exchange()
+            //Direct commands need the aproach shown in
+            //direct_command function
             {"get_card_uid","FF CA 00 00 00"},
             {"read_binary_blocks","FF B0 00 00 04"}, //last two bytes = 1. block to start reading. 2. How many bytes to read
             {"update_binary_blocks","FF D6 00 00 04 {0}"}, //last 3 bytes = 1. block to start reading. 2. How many bytes to read, bytes in
@@ -73,10 +77,12 @@ namespace nfc_rw
             //like polling interval, tags that are accepted etc.
             //see ACR122U-Api documentation for comprehensive list
             {"get_picc_operating_parameter","FF 00 50 00 00"},
-            {"disable_picc_polling", "FF 00 51 7F 00"},
-            {"enable_picc_polling", "FF 00 51 FF 00"},
+            {"picc_polling_off", "FF 00 51 7F 00"},
+            {"picc_polling_on", "FF 00 51 FF 00"},
             {"antenna_off", "FF 00 00 00 04 D4 32 01 00"},
             {"antenna_on", "FF 00 00 00 04 D4 32 01 01"},
+            {"buzzer_on", "FF 00 52 00 00"},
+            {"buzzer_off","FF 00 52 00 FF"},
 
             //############# Configure as target and wait for initiators #############
             //This set of commands used for initializing the smart card reader
@@ -85,9 +91,30 @@ namespace nfc_rw
             {"Tg_Init_as_target", "FF 00 00 00 D4 8C 00 " }, 
             {"Receive_data_from_initiator", "FF 00 00 00 D4 86" },
             {"Send_data_to_initiator", "FF 00 00 00 D4 8E {0}" },                   // {0} Data to be sent
+            
+            //Michael Roland sweet set for card emulation mode gogo:
+            //source http://stackoverflow.com/questions/21051315/nfc-acr122-tginitastarget-initiator-releasing-target
+            //http://quabr.com/21720557/nfc-card-emulation-issue-s3android-4-3-and-acr122u
+            {"read_register","FF000000 08 D406 6305 630D 6338"},
+            {"write_register","FF000000 11 D408 6302 80 6303 80 6305 04 630D EF 6338 F7"},
+            {"set_params","FF000000 03 D412 30"},
+            {"tg_init","FF000000 27 D48C 05 0400 123456 20 000000000000000000000000000000000000 00000000000000000000 00 00"}, //TGINIT DOES NOT GIVE RESPONSE
+            {"tg_get_data","FF000000 02 D486"},
+            {"tg_set_data","FF000000 {0} D48E {1}"}, //{0} = 2+length of {1}=Command sent from thhe reader
+
+            //FROM the ACR122_PN53
+            //https://code.google.com/p/nfcip-java/source/browse/trunk/nfcip-java/doc/ACR122_PN53x.txt
+            /*{"injumpfordep",""},
+            {"",""},
+            {"",""},
+            {"",""},
+            {"",""},
+            {"",""},
+            {"",""},
+            */
+
             //{"read_register", "FF 00 00 00 08 D4 06 63 05 63 0D 63 38"}             // Get information about what state the reader is  
-            //Always returns too small buffer size for return
-            {"read_register", "FF 00 00 00 38 D4 06 63 05 63 0D 63 38 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00"}
+            //{"read_register", "FF 00 00 00 38 D4 06 63 05 63 0D 63 38 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00"}
 
         };
 
@@ -282,7 +309,6 @@ namespace nfc_rw
         {
             direct_command(APDU_commands["antenna_off"]);
         }
-
         static void turn_on_antenna()
         {
             direct_command(APDU_commands["antenna_on"]);
@@ -296,7 +322,13 @@ namespace nfc_rw
             byte[] recBuffer = new byte[256];
             int recLen = recBuffer.Length;
             reader.SCard.Transmit(apdu, apdu.Length, recBuffer, ref recLen);
+
+            foreach (var item in recBuffer)
+            {
+                Console.WriteLine(item.ToString());
+            }
         }
+
 
         
 
@@ -304,7 +336,17 @@ namespace nfc_rw
         {
             //RespApdu get_data = reader.Exchange(APDU_commands["read_register"]);
             //string input_text = Console.ReadLine();
-            RespApdu setInit = reader.Exchange(APDU_commands["Tg_Init_as_target"]);
+            direct_command(APDU_commands["read_register"]);
+            direct_command(APDU_commands["write_register"]);
+            direct_command(APDU_commands["set_params"]);
+            direct_command(APDU_commands["Tg_Init_as_target"]);
+
+            while (true)
+            {
+                System.Threading.Thread.Sleep(5000);
+                direct_command(APDU_commands["tg_get_data"]);
+            }
+            
         }
 
 
@@ -327,11 +369,11 @@ namespace nfc_rw
         // There appears to be no "get buzzer state" apdu
         static void set_buzzer_off()
         {
-            RespApdu tassu = reader.Exchange("FF 00 52 00 00");
+            direct_command(APDU_commands["buzzer_off"]);
         }
         static void set_buzzer_on()
         {
-            RespApdu tassu = reader.Exchange("FF 00 52 00 FF");
+            direct_command(APDU_commands["buzzer_on"]);
         }
 
         static void change_modes_for_reader()
@@ -374,13 +416,15 @@ namespace nfc_rw
                 {
 
                     //reader.SCard.Connect("",SCARD_SHARE_MODE.Direct, SCARD_PROTOCOL.Tx);
-                    reader.Connect(SCARD_SCOPE.System);
-                    
+                    reader.Connect();
+                    reader.ActivateCard(SCARD_SHARE_MODE.Exclusive, SCARD_PROTOCOL.Tx);
                     //set_buzzer_on();
                     //set_target_mode();
                     
                     reader.ActivateCard();
 
+                    set_initiator_mode();
+                    
                     
                     //For some reason Direct commands only work after card has been activated (the command above)
                     //Also the reader resets to normal state after it's been unplugged.
@@ -390,21 +434,16 @@ namespace nfc_rw
                         modes_changed = true;
                     }
                     
-                    RespApdu respApdu = reader.Exchange(APDU_commands["get_card_uid"]); // Get Card UID ...
+                    //RespApdu respApdu = reader.Exchange(APDU_commands["get_card_uid"]); // Get Card UID ...
 
-                    if (respApdu.SW1SW2 == 0x9000)
+                    /*if (respApdu.SW1SW2 == 0x9000)
                     {
                         Console.WriteLine("UID  = 0x" + HexFormatting.ToHexString(respApdu.Data, true));
-                    }
+                    }*/
 
-                    message = NdefLibrary.Ndef.NdefMessage.FromByteArray(find_ndef());
-                    parse_record(message);
+                    //message = NdefLibrary.Ndef.NdefMessage.FromByteArray(find_ndef());
+                    //parse_record(message);
 
-                    //write_to_tag("mela");
-                    //turn_off_antenna();
-                    //reader.SCard.Disconnect();
-                    //reader.Disconnect();
-                    //turn_off_antenna();
                 }
                 catch (WinSCardException ex)
                 {
@@ -419,7 +458,6 @@ namespace nfc_rw
                 {
                     //direct_command(APDU_commands["enable_picc_polling"]);
                     reader.SCard.Disconnect();
-                    
                     Console.WriteLine("Please press any key...");
                     input_text = Console.ReadLine();
                 }
