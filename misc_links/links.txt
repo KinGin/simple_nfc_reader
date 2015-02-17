@@ -1,0 +1,34 @@
+Urleja:
+
+https://github.com/grundid/host-card-emulation-sample
+http://stackoverflow.com/questions/5661808/acr122-card-emulation
+https://code.google.com/p/nfcip-java/source/browse/trunk/nfcip-java/doc/ACR122_PN53x.txt
+http://blog.opendatalab.de/hack/2013/11/07/android-host-card-emulation-with-acr122/
+http://blog.opendatalab.de/hack/2013/11/07/android-host-card-emulation-with-acr122/
+https://github.com/grundid/nfctools-examples
+http://www.libnfc.org/community/topic/479/acr122ut-and-nfcconnect/
+http://manned.org/nfc-emulate-forum-tag4/ad67a689
+
+
+
+
+08:48<KinGin> http://blog.opendatalab.de/hack/2013/11/07/android-host-card-emulation-with-acr122/
+08:48<KinGin> https://groups.google.com/forum/#!topic/android-developers/yR4m6FfZom4
+08:48<KinGin> https://code.google.com/p/nfcip-java/source/browse/trunk/nfcip-java/doc/ACR122_PN53x.txt
+08:49<KinGin> http://stackoverflow.com/questions/11258169/communication-issue-of-acr122u-nfc-card-reader-with-android-phone-in-p2p-mode
+08:49<KinGin> http://stackoverflow.com/questions/21964625/sony-xperia-s-cannot-be-detected-acr122u-nfc-reader
+08:49<KinGin> http://stackoverflow.com/questions/21051315/nfc-acr122-tginitastarget-initiator-releasing-target
+08:50<KinGin> http://stackoverflow.com/questions/24761190/apdu-error-while-send-tginitastarget-command-to-the-pn532-acr122u
+08:50<KinGin> http://stackoverflow.com/questions/24758072/acr122u-direct-communication-no-response/24767180#24767180
+08:51<KinGin> http://stackoverflow.com/users/2425802/michael-roland
+08:52<KinGin> mi.roland (at) gmail.com
+
+
+hmm:
+https://code.google.com/p/nfcip-java/source/browse/trunk/nfcip-java/doc/ACR122_PN53x.txt
+
+now then:
+https://code.google.com/p/ismb-snep-java/
+
+
+http://apps4android.org/nfc-specifications/NFCForum-TS-Type-4-Tag_2.0.pdf
