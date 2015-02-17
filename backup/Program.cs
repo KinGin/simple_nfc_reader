@@ -238,17 +238,6 @@ namespace nfc_rw
 
             RespApdu write_four_bytes;
 
-            /*if (Input_bytes.Length % 4 != 0)
-            {
-                int mod_of_input = Input_bytes.Length % 4;
-                for (int i = 0; i < mod_of_input; i++)
-                {
-                    
-
-                }
-            }*/
-
-
             for (int i = 0; i < Input_bytes.Length; i = i + 4)
             {
                 for (int j = 0; j < 4; j++)
@@ -326,7 +315,7 @@ namespace nfc_rw
 
             reader.Exchange(sbuffer);
 
-            Console.WriteLine("Juma", rbuffer.Length);
+            Console.WriteLine("Juma: ", rbuffer.Length);
             //RespApdu tassu = reader.Exchange(String.Format(APDU_commands["direct_command_prefix"], "0A", "D4 56 00 02 00 00 FF FF 00 00"));
             //Console.WriteLine("Joo eli:  ", HexFormatting.ToHexString(rbuffer, true));
         }

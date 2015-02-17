@@ -73,6 +73,10 @@ namespace nfc_rw
             //like polling interval, tags that are accepted etc.
             //see ACR122U-Api documentation for comprehensive list
             {"get_picc_operating_parameter","FF 00 50 00 00"},
+            {"disable_picc_polling", "FF 00 51 7F 00"},
+            {"enable_picc_polling", "FF 00 51 FF 00"},
+            {"antenna_off", "FF 00 00 00 04 D4 32 01 00"},
+            {"antenna_on", "FF 00 00 00 04 D4 32 01 01"},
 
             //############# Configure as target and wait for initiators #############
             //This set of commands used for initializing the smart card reader
@@ -136,7 +140,6 @@ namespace nfc_rw
 
         }
 
-        
         /*<summary>
          * BYTE[] find_ndef()
          * This function returns Byte array containgin all bytes from
@@ -150,7 +153,6 @@ namespace nfc_rw
          * 
          * 
          */
-
         static Byte[] find_ndef()
         {
             RespApdu read_four_bytes;
@@ -278,52 +280,25 @@ namespace nfc_rw
 
         static void turn_off_antenna()
         {
-            RespApdu antenna_off = reader.Exchange("FF 00 00 00 04 D4 32 01 00");
+            direct_command(APDU_commands["antenna_off"]);
         }
 
         static void turn_on_antenna()
         {
-            RespApdu antenna_on = reader.Exchange("FF 00 00 00 04 D4 32 01 01");
+            direct_command(APDU_commands["antenna_on"]);
         }
 
-        static byte[] hex_string_to_byte_array(String hex_string)
+        static void direct_command(string command)
         {
-              int NumberChars = hex_string.Length;
-              byte[] bytes = new byte[NumberChars / 2];
-              for (int i = 0; i < NumberChars; i += 2)
-                bytes[i / 2] = Convert.ToByte(hex_string.Substring(i, 2), 16);
-              return bytes;
+            //byte[] apdu = { 0xFF, 0x00, 0x50, 0x00, 0x00 };
+
+            byte[] apdu = hex_string_to_byte_array(command);
+            byte[] recBuffer = new byte[256];
+            int recLen = recBuffer.Length;
+            reader.SCard.Transmit(apdu, apdu.Length, recBuffer, ref recLen);
         }
 
-        static string string_to_hex_string(string input)
-        {
-            byte[] temp = Encoding.Default.GetBytes(input);
-            var hexString = BitConverter.ToString(temp);
-            hexString = hexString.Replace("-", " ");
-            return hexString;
-        }
-
-
-        static List<byte[]> splitted_array(byte[] array, int lengthToSplit)
-        {
-            List<byte[]> splitted = new List<byte[]>();//This list will contain all the splitted arrays.
-
-            int arrayLength = array.Length;
-
-            for (int i = 0; i < arrayLength; i = i + lengthToSplit)
-            {
-                Byte[] val = new Byte[lengthToSplit];
-
-                if (arrayLength < i + lengthToSplit)
-                {
-                    lengthToSplit = arrayLength - i;
-                }
-                Array.Copy(array, i, val, 0, lengthToSplit);
-                splitted.Add(val);
-            }
-            return splitted;
-        }
-
+        
 
         static void set_initiator_mode() 
         {
@@ -354,7 +329,6 @@ namespace nfc_rw
         {
             RespApdu tassu = reader.Exchange("FF 00 52 00 00");
         }
-
         static void set_buzzer_on()
         {
             RespApdu tassu = reader.Exchange("FF 00 52 00 FF");
@@ -407,13 +381,12 @@ namespace nfc_rw
                     
                     reader.ActivateCard();
 
+                    
                     //For some reason Direct commands only work after card has been activated (the command above)
                     //Also the reader resets to normal state after it's been unplugged.
                     //TODO: check if mode changes can be made permanent
                     if (!modes_changed)
                     {
-                        //Console.WriteLine("YOLOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOO");
-                        //change_modes_for_reader();
                         modes_changed = true;
                     }
                     
@@ -424,16 +397,14 @@ namespace nfc_rw
                         Console.WriteLine("UID  = 0x" + HexFormatting.ToHexString(respApdu.Data, true));
                     }
 
-                    //RespApdu tespApdu = reader.Exchange(String.Format(APDU_commands["direct_command_prefix"],"18", "D4 86 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00")); // Get Card UID ...
-                    //RespApdu bespApdu = reader.Exchange(String.Format(APDU_commands["direct_command_prefix"], "18", "D4 40 01 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00")); // Get Card UID ...
+                    message = NdefLibrary.Ndef.NdefMessage.FromByteArray(find_ndef());
+                    parse_record(message);
 
-                    //message = NdefLibrary.Ndef.NdefMessage.FromByteArray();
-                    //message = NdefLibrary.Ndef.NdefMessage.FromByteArray(find_ndef());
-                    //parse_record(message);
-
-                    write_to_tag("mela");
-                    reader.SCard.Disconnect();
-                    turn_off_antenna();
+                    //write_to_tag("mela");
+                    //turn_off_antenna();
+                    //reader.SCard.Disconnect();
+                    //reader.Disconnect();
+                    //turn_off_antenna();
                 }
                 catch (WinSCardException ex)
                 {
@@ -446,14 +417,52 @@ namespace nfc_rw
                 }
                 finally
                 {
-                    reader.Disconnect();
+                    //direct_command(APDU_commands["enable_picc_polling"]);
+                    reader.SCard.Disconnect();
+                    
                     Console.WriteLine("Please press any key...");
                     input_text = Console.ReadLine();
                 }
             }
         }
 
-        
+        static byte[] hex_string_to_byte_array(String hex_string)
+        {
+            hex_string = hex_string.Replace(" ", "");
+            int NumberChars = hex_string.Length;
+            byte[] bytes = new byte[NumberChars / 2];
+            for (int i = 0; i < NumberChars; i += 2)
+                bytes[i / 2] = Convert.ToByte(hex_string.Substring(i, 2), 16);
+            return bytes;
+        }
 
+        static string string_to_hex_string(string input)
+        {
+            byte[] temp = Encoding.Default.GetBytes(input);
+            var hexString = BitConverter.ToString(temp);
+            hexString = hexString.Replace("-", " ");
+            return hexString;
+        }
+
+
+        static List<byte[]> splitted_array(byte[] array, int lengthToSplit)
+        {
+            List<byte[]> splitted = new List<byte[]>();//This list will contain all the splitted arrays.
+
+            int arrayLength = array.Length;
+
+            for (int i = 0; i < arrayLength; i = i + lengthToSplit)
+            {
+                Byte[] val = new Byte[lengthToSplit];
+
+                if (arrayLength < i + lengthToSplit)
+                {
+                    lengthToSplit = arrayLength - i;
+                }
+                Array.Copy(array, i, val, 0, lengthToSplit);
+                splitted.Add(val);
+            }
+            return splitted;
+        }
     } 
 }
