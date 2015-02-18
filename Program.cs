@@ -104,9 +104,9 @@ namespace nfc_rw
 
             //FROM the ACR122_PN53
             //https://code.google.com/p/nfcip-java/source/browse/trunk/nfcip-java/doc/ACR122_PN53x.txt
-            /*{"injumpfordep",""},
-            {"",""},
-            {"",""},
+            {"injumpfordep","FF 00 00 00 0A D4 56 00 02 01 00 FF FF 00 00"},
+            {"set_as_target","FF 00 00 00 09 D4 8C 00 08 00 12 24 56 40"}
+            /*{"",""},
             {"",""},
             {"",""},
             {"",""},
@@ -329,8 +329,11 @@ namespace nfc_rw
             }
         }
 
-
-        
+        static void try_this()
+        {
+            direct_command(APDU_commands["injumpfordep"]);
+            direct_command(APDU_commands["set_as_target"]);
+        }
 
         static void set_initiator_mode() 
         {
@@ -417,13 +420,13 @@ namespace nfc_rw
 
                     //reader.SCard.Connect("",SCARD_SHARE_MODE.Direct, SCARD_PROTOCOL.Tx);
                     reader.Connect();
-                    reader.ActivateCard(SCARD_SHARE_MODE.Exclusive, SCARD_PROTOCOL.Tx);
+                    reader.ActivateCard();
                     //set_buzzer_on();
                     //set_target_mode();
                     
                     reader.ActivateCard();
-
-                    set_initiator_mode();
+                    //try_this();
+                    //set_initiator_mode();
                     
                     
                     //For some reason Direct commands only work after card has been activated (the command above)
