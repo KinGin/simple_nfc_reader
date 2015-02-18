@@ -323,16 +323,22 @@ namespace nfc_rw
             int recLen = recBuffer.Length;
             reader.SCard.Transmit(apdu, apdu.Length, recBuffer, ref recLen);
 
-            foreach (var item in recBuffer)
+            /*foreach (var item in recBuffer)
             {
                 Console.WriteLine(item.ToString());
-            }
+            }*/
         }
 
         static void try_this()
         {
             direct_command(APDU_commands["injumpfordep"]);
             direct_command(APDU_commands["set_as_target"]);
+
+            while (true)
+            {
+                System.Threading.Thread.Sleep(5000);
+                direct_command(APDU_commands["tg_get_data"]);
+            }
         }
 
         static void set_initiator_mode() 
@@ -424,8 +430,8 @@ namespace nfc_rw
                     //set_buzzer_on();
                     //set_target_mode();
                     
-                    reader.ActivateCard();
-                    //try_this();
+                    //reader.ActivateCard();
+                    try_this();
                     //set_initiator_mode();
                     
                     
