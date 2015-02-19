@@ -255,26 +255,66 @@ namespace nfc_rw
 
         static void write_to_tag(String bytes_in)
         {
-            string command = "FF D6 00 ";
+            string command_prefix = "FF D6 00 ";
+            string command;
             int byte_num = 0;
             int value;
-
-            NdefMessage write_this = new NdefMessage();
-            //string address = String.Format("{0:X}", value);
             String Hex_address;
 
-            byte[] ba = Encoding.Default.GetBytes(bytes_in);
-            String hexString = BitConverter.ToString(ba);
-            hexString = hexString.Replace("-", " ");
+            NdefMessage write_this = new NdefMessage {new NdefTextRecord { LanguageCode = "fi", Text = bytes_in } };
+            byte[] ba = write_this.ToByteArray();
+
+            foreach (var item in ba)
+            {
+                Console.WriteLine(HexFormatting.ToHexString(item));
+            }
+
             //Byte[] Input_bytes = hex_string_to_byte_array(string_to_hex_string(bytes_in));
             byte[] send_chunk = new byte[4];
-
             RespApdu write_four_bytes;
+            int count = 0;
+            int mod4 = ba.Length % 4;
+
+
+            for (int i = 0; i < ba.Length; ++i)
+            {
+                
+                send_chunk[count] = ba[i];
+                ++count;
+                if ( count == 4)
+                {
+                    count = 0;
+                    Hex_address = String.Format("{0:X}", Convert.ToInt32( (i / 4) + 4));
+                    if (i < 16)
+                    {
+                        Hex_address = "0" + Hex_address;
+                    }
+                    command = command_prefix + Hex_address + " 04 " + HexFormatting.ToHexString(send_chunk, true);
+                    write_four_bytes = reader.Exchange(command);                  
+                    //send_chunk.
+                }
+            }
+
+            if (count != 0)
+            {
+                for (int i = count; i < send_chunk.Length; i++)
+                {
+                    send_chunk[i] = 0x00;
+                }
+                send_chunk[3] = 254;
+                Hex_address = String.Format("{0:X}", Convert.ToInt32(((ba.Length - count)/4) + 4));
+                if ((((ba.Length - count)/4) + 4) < 16)
+                {
+                    Hex_address = "0" + Hex_address;
+                }
+                command = command_prefix + Hex_address + " 04 " + HexFormatting.ToHexString(send_chunk, true);
+                write_four_bytes = reader.Exchange(command);
+            }
 
 
 
-            command = command + "04" + " 04 " + hexString;
-            write_four_bytes = reader.Exchange(command);
+            //command = command + "04" + " 04 " + hexString;
+            //write_four_bytes = reader.Exchange(command);
            
             /*if (Input_bytes.Length % 4 != 0)
             {
@@ -397,17 +437,6 @@ namespace nfc_rw
 
         }
 
-        // Command for reading at active or init_as_passive
-        //# NOT WORKING
-        static void readstuff()
-        {
-
-             while (true)
-	         {
-	            byte[] sbuffer = {0xFF, 0x00, 0x00, 0x00, 0x02, 0xD4, 0x86 };
-	         }
-             
-        }
 
         static void Main(string[] args)
         {
@@ -429,9 +458,11 @@ namespace nfc_rw
                     reader.ActivateCard();
                     //set_buzzer_on();
                     //set_target_mode();
-                    
+
+                    write_to_tag(input_text = "kissa:D");
+
                     //reader.ActivateCard();
-                    try_this();
+                    //try_this();
                     //set_initiator_mode();
                     
                     
