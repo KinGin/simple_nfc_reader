@@ -253,18 +253,27 @@ namespace nfc_rw
             return hexbytes.ToArray();
         }
 
+
+        //Currently this writes plaintext to tag in NDEF format
+        //TODO: Other tag types
+        //      Limit to how much data can be fit to tag
         static void write_to_tag(String bytes_in)
         {
             string command_prefix = "FF D6 00 ";
             string command;
-            int byte_num = 0;
-            int value;
             String Hex_address;
 
-            NdefMessage write_this = new NdefMessage {new NdefTextRecord { LanguageCode = "fi", Text = bytes_in } };
-            byte[] ba = write_this.ToByteArray();
+            
 
-            foreach (var item in ba)
+            NdefMessage write_this = new NdefMessage {new NdefTextRecord { LanguageCode = "fi", Text = bytes_in } };
+            byte[] ndef_prefix = { 0x03, (byte)write_this.ToByteArray().Length };
+            List<byte> concat = new List<byte>();
+
+            concat.AddRange(ndef_prefix);
+            concat.AddRange(write_this.ToByteArray());
+            byte[] ndef_bytes = concat.ToArray();
+
+            foreach (var item in ndef_bytes)
             {
                 Console.WriteLine(HexFormatting.ToHexString(item));
             }
@@ -273,23 +282,26 @@ namespace nfc_rw
             byte[] send_chunk = new byte[4];
             RespApdu write_four_bytes;
             int count = 0;
-            int mod4 = ba.Length % 4;
+            int mod4 = ndef_bytes.Length % 4;
 
 
-            for (int i = 0; i < ba.Length; ++i)
+            for (int i = 0; i < ndef_bytes.Length; ++i)
             {
-                
-                send_chunk[count] = ba[i];
+
+                send_chunk[count] = ndef_bytes[i];
                 ++count;
                 if ( count == 4)
                 {
                     count = 0;
                     Hex_address = String.Format("{0:X}", Convert.ToInt32( (i / 4) + 4));
-                    if (i < 16)
+                    if ( (i / 4) + 4 < 16)
                     {
                         Hex_address = "0" + Hex_address;
                     }
+                    Console.WriteLine(Hex_address);
+
                     command = command_prefix + Hex_address + " 04 " + HexFormatting.ToHexString(send_chunk, true);
+                    Console.WriteLine(command);
                     write_four_bytes = reader.Exchange(command);                  
                     //send_chunk.
                 }
@@ -302,8 +314,8 @@ namespace nfc_rw
                     send_chunk[i] = 0x00;
                 }
                 send_chunk[2] = 254;
-                Hex_address = String.Format("{0:X}", Convert.ToInt32(((ba.Length - count)/4) + 4));
-                if ((((ba.Length - count)/4) + 4) < 16)
+                Hex_address = String.Format("{0:X}", Convert.ToInt32(((ndef_bytes.Length - count) / 4) + 4));
+                if ((((ndef_bytes.Length - count) / 4) + 4) < 16)
                 {
                     Hex_address = "0" + Hex_address;
                 }
@@ -353,7 +365,6 @@ namespace nfc_rw
         {
             direct_command(APDU_commands["antenna_on"]);
         }
-
         static void direct_command(string command)
         {
             //byte[] apdu = { 0xFF, 0x00, 0x50, 0x00, 0x00 };
@@ -368,7 +379,6 @@ namespace nfc_rw
                 Console.WriteLine(item.ToString());
             }*/
         }
-
         static void try_this()
         {
             direct_command(APDU_commands["injumpfordep"]);
@@ -380,7 +390,6 @@ namespace nfc_rw
                 direct_command(APDU_commands["tg_get_data"]);
             }
         }
-
         static void set_initiator_mode() 
         {
             //RespApdu get_data = reader.Exchange(APDU_commands["read_register"]);
@@ -424,7 +433,6 @@ namespace nfc_rw
         {
             direct_command(APDU_commands["buzzer_on"]);
         }
-
         static void change_modes_for_reader()
         {
             //Buzzer Control
@@ -441,26 +449,53 @@ namespace nfc_rw
         static void Main(string[] args)
         {
             ConsoleTraceListener consoleTraceListener = new ConsoleTraceListener();
-
             Trace.Listeners.Add(consoleTraceListener);
+            List<string> arguments = new List<string>();
+            arguments.AddRange(args);
+
+            foreach (var item in arguments)
+            {
+                Console.WriteLine(item);
+            }
 
             reader = new PCSCReader();
             NdefLibrary.Ndef.NdefMessage message = new NdefLibrary.Ndef.NdefMessage();
 
             string input_text = "";
-            while (input_text != "joo")
-            {
+            //while (input_text != "joo")
+            //{
                 try
                 {
 
+
                     //reader.SCard.Connect("",SCARD_SHARE_MODE.Direct, SCARD_PROTOCOL.Tx);
-                    reader.Connect();
-                    reader.ActivateCard();
+                    //reader.Connect();
+                    //reader.ActivateCard();
                     //set_buzzer_on();
                     //set_target_mode();
 
-                    write_to_tag(input_text = "kissa:D");
+                    if(args[0] == "read")
+                    {
+                        Console.WriteLine("Reading from tag");
+                        reader.Connect();
+                        reader.ActivateCard();
+                        message = NdefLibrary.Ndef.NdefMessage.FromByteArray(find_ndef());
+                        parse_record(message);
+                    }
+                    else if (args[0] == "write")
+                    {
+                        Console.WriteLine("writing to tag: ", args[1]);
+                        reader.Connect();
+                        reader.ActivateCard();
+                        write_to_tag(args[1]);
+                    }
+                    else
+                    {
+                        Console.WriteLine("no arguments given. Stopping....");
+                        System.Environment.Exit(1);
+                    }
 
+                    //write_to_tag(input_text = "Hassulla Tassulla kiva paijaa massua ai että kun on hassua:3");
                     //reader.ActivateCard();
                     //try_this();
                     //set_initiator_mode();
@@ -469,11 +504,7 @@ namespace nfc_rw
                     //For some reason Direct commands only work after card has been activated (the command above)
                     //Also the reader resets to normal state after it's been unplugged.
                     //TODO: check if mode changes can be made permanent
-                    if (!modes_changed)
-                    {
-                        modes_changed = true;
-                    }
-                    
+
                     //RespApdu respApdu = reader.Exchange(APDU_commands["get_card_uid"]); // Get Card UID ...
 
                     /*if (respApdu.SW1SW2 == 0x9000)
@@ -502,7 +533,7 @@ namespace nfc_rw
                     input_text = Console.ReadLine();
                 }
             }
-        }
+        //}
 
         static byte[] hex_string_to_byte_array(String hex_string)
         {
