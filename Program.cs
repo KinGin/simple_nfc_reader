@@ -301,7 +301,7 @@ namespace nfc_rw
                 {
                     send_chunk[i] = 0x00;
                 }
-                send_chunk[3] = 254;
+                send_chunk[2] = 254;
                 Hex_address = String.Format("{0:X}", Convert.ToInt32(((ba.Length - count)/4) + 4));
                 if ((((ba.Length - count)/4) + 4) < 16)
                 {
