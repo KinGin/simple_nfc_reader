@@ -529,8 +529,9 @@ namespace nfc_rw
                 {
                     //direct_command(APDU_commands["enable_picc_polling"]);
                     reader.SCard.Disconnect();
-                    Console.WriteLine("Please press any key...");
-                    input_text = Console.ReadLine();
+                    System.Environment.Exit(1);
+                    //Console.WriteLine("Please press any key...");
+                    //input_text = Console.ReadLine();
                 }
             }
         //}
