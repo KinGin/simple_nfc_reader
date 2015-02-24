@@ -130,7 +130,7 @@ namespace nfc_rw
          * 
          * //TODO: expand for all types of NDEF records
          */
-        static void parse_record(NdefMessage ndefMessage)
+        static string parse_record(NdefMessage ndefMessage)
         {
             foreach (NdefRecord record in ndefMessage)
             {
@@ -145,6 +145,7 @@ namespace nfc_rw
                     Debug.WriteLine("Titles: " + spRecord.TitleCount());
                     Debug.WriteLine("1. Title: " + spRecord.Titles[0].Text);
                     Debug.WriteLine("Action set: " + spRecord.ActionInUse());
+                    return spRecord.Uri;
                     // You can also check the action (if in use by the record), 
                     //mime type and size of the linked content.
                 }
@@ -153,6 +154,7 @@ namespace nfc_rw
                     // Convert and extract URI info
                     var uriRecord = new NdefUriRecord(record);
                     Debug.WriteLine("URI: " + uriRecord.Uri);
+                    return uriRecord.Uri;
                 }
                 else if (specializedType == typeof(NdefTextRecord))
                 {
@@ -162,6 +164,7 @@ namespace nfc_rw
                     Debug.WriteLine("Language code: " + textRecord.LanguageCode);
                     var textEncoding = (textRecord.TextEncoding == NdefTextRecord.TextEncodingType.Utf8 ? "UTF-8" : "UTF-16");
                     Debug.WriteLine("Encoding: " + textEncoding);
+                    return textRecord.Text;
                 }
             }
 
@@ -262,8 +265,6 @@ namespace nfc_rw
             string command_prefix = "FF D6 00 ";
             string command;
             String Hex_address;
-
-            
 
             NdefMessage write_this = new NdefMessage {new NdefTextRecord { LanguageCode = "fi", Text = bytes_in } };
             byte[] ndef_prefix = { 0x03, (byte)write_this.ToByteArray().Length };
@@ -461,13 +462,13 @@ namespace nfc_rw
             reader = new PCSCReader();
             NdefLibrary.Ndef.NdefMessage message = new NdefLibrary.Ndef.NdefMessage();
 
-            string input_text = "";
+            //string input_text = "";
             //while (input_text != "joo")
             //{
                 try
                 {
 
-
+                    turn_on_antenna();
                     //reader.SCard.Connect("",SCARD_SHARE_MODE.Direct, SCARD_PROTOCOL.Tx);
                     //reader.Connect();
                     //reader.ActivateCard();
@@ -480,7 +481,7 @@ namespace nfc_rw
                         reader.Connect();
                         reader.ActivateCard();
                         message = NdefLibrary.Ndef.NdefMessage.FromByteArray(find_ndef());
-                        parse_record(message);
+                        Console.WriteLine(parse_record(message));
                     }
                     else if (args[0] == "write")
                     {
@@ -492,7 +493,6 @@ namespace nfc_rw
                     else
                     {
                         Console.WriteLine("no arguments given. Stopping....");
-                        System.Environment.Exit(1);
                     }
 
                     //write_to_tag(input_text = "Hassulla Tassulla kiva paijaa massua ai että kun on hassua:3");
@@ -514,7 +514,7 @@ namespace nfc_rw
 
                     //message = NdefLibrary.Ndef.NdefMessage.FromByteArray(find_ndef());
                     //parse_record(message);
-
+                    System.Environment.Exit(1);
                 }
                 catch (WinSCardException ex)
                 {
@@ -528,7 +528,9 @@ namespace nfc_rw
                 finally
                 {
                     //direct_command(APDU_commands["enable_picc_polling"]);
+                    
                     reader.SCard.Disconnect();
+                    turn_off_antenna();
                     System.Environment.Exit(1);
                     //Console.WriteLine("Please press any key...");
                     //input_text = Console.ReadLine();
