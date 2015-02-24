@@ -12,8 +12,8 @@
  * 
  * 3. 
  * 
- * The libraries used are NDEFLibrary URL:
- * and the other one URL:
+ * The libraries used are NDEFLibrary URL: 
+ * PC/SC library:  http://www.smartcard-magic.net/en/pc-sc-reader/csharppcsc-wrapper/
  * 
  * If you are newbie to the NFC tags and NDEF like I was here is some
  * basic info.
@@ -92,13 +92,13 @@ namespace nfc_rw
             {"Receive_data_from_initiator", "FF 00 00 00 D4 86" },
             {"Send_data_to_initiator", "FF 00 00 00 D4 8E {0}" },                   // {0} Data to be sent
             
-            //Michael Roland sweet set for card emulation mode gogo:
+            //set for card emulation mode:
             //source http://stackoverflow.com/questions/21051315/nfc-acr122-tginitastarget-initiator-releasing-target
             //http://quabr.com/21720557/nfc-card-emulation-issue-s3android-4-3-and-acr122u
             {"read_register","FF000000 08 D406 6305 630D 6338"},
             {"write_register","FF000000 11 D408 6302 80 6303 80 6305 04 630D EF 6338 F7"},
             {"set_params","FF000000 03 D412 30"},
-            {"tg_init","FF00000027D48C05040012345620000000000000000000000000000000000000000000000000000000000000"}, //TGINIT DOES NOT GIVE RESPONSE
+            {"tg_init","FF000000 27 D4 8C 05 04 00 12 34 56 20 000000000000000000000000000000000000000000000000000000000000"}, //TGINIT DOES NOT GIVE RESPONSE
             {"tg_get_data","FF000000 02 D486"},
             {"tg_set_data","FF000000 {0} D48E {1}"}, //{0} = 2+length of {1}=Command sent from thhe reader
 
@@ -167,6 +167,7 @@ namespace nfc_rw
                     return textRecord.Text;
                 }
             }
+            return "not a valid Ndefrecord";
 
         }
 
@@ -399,13 +400,14 @@ namespace nfc_rw
             direct_command(APDU_commands["write_register"]);
             direct_command(APDU_commands["set_params"]);
             direct_command(APDU_commands["tg_init"]);
-
+            //direct_command(APDU_commands["tg_get_data"]);
             while (true)
             {
                 System.Threading.Thread.Sleep(5000);
+                //direct_command(APDU_commands["tg_init"]);
                 direct_command(APDU_commands["tg_get_data"]);
             }
-            
+
         }
 
 
@@ -468,7 +470,7 @@ namespace nfc_rw
                 try
                 {
 
-                    turn_on_antenna();
+                    //turn_on_antenna();
                     //reader.SCard.Connect("",SCARD_SHARE_MODE.Direct, SCARD_PROTOCOL.Tx);
                     //reader.Connect();
                     //reader.ActivateCard();
@@ -514,6 +516,8 @@ namespace nfc_rw
 
                     //message = NdefLibrary.Ndef.NdefMessage.FromByteArray(find_ndef());
                     //parse_record(message);
+                    //set_initiator_mode();
+                    //string input_text = Console.ReadLine();
                     System.Environment.Exit(1);
                 }
                 catch (WinSCardException ex)
@@ -530,10 +534,11 @@ namespace nfc_rw
                     //direct_command(APDU_commands["enable_picc_polling"]);
                     
                     reader.SCard.Disconnect();
-                    turn_off_antenna();
+                    //turn_off_antenna();
+                    string input_text = Console.ReadLine();
                     System.Environment.Exit(1);
                     //Console.WriteLine("Please press any key...");
-                    //input_text = Console.ReadLine();
+                    
                 }
             }
         //}
