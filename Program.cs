@@ -451,15 +451,21 @@ namespace nfc_rw
 
         static void Main(string[] args)
         {
+            if (args.Length == 0)
+            {
+                Console.WriteLine("no arguments given. Stopping....");
+                System.Environment.Exit(1);
+            }
+
             ConsoleTraceListener consoleTraceListener = new ConsoleTraceListener();
             Trace.Listeners.Add(consoleTraceListener);
-            List<string> arguments = new List<string>();
+            /*List<string> arguments = new List<string>();
             arguments.AddRange(args);
 
             foreach (var item in arguments)
             {
                 Console.WriteLine(item);
-            }
+            }*/
 
             reader = new PCSCReader();
             NdefLibrary.Ndef.NdefMessage message = new NdefLibrary.Ndef.NdefMessage();
@@ -483,18 +489,20 @@ namespace nfc_rw
                         reader.Connect();
                         reader.ActivateCard();
                         message = NdefLibrary.Ndef.NdefMessage.FromByteArray(find_ndef());
-                        Console.WriteLine(parse_record(message));
+                        Console.WriteLine("rd: " + parse_record(message));
                     }
-                    else if (args[0] == "write")
+                    else if (args[0] == "write" && args.Length == 2)
                     {
                         Console.WriteLine("writing to tag: ", args[1]);
                         reader.Connect();
                         reader.ActivateCard();
                         write_to_tag(args[1]);
+                        Console.WriteLine("wrote to tag:" + args[1]);
                     }
                     else
                     {
-                        Console.WriteLine("no arguments given. Stopping....");
+                        Console.WriteLine("Bad arguments");
+                        System.Environment.Exit(1);
                     }
 
                     //write_to_tag(input_text = "Hassulla Tassulla kiva paijaa massua ai että kun on hassua:3");
