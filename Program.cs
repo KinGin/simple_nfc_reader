@@ -44,6 +44,8 @@ using NdefLibrary.Ndef;
 using System.Collections;
 
 
+
+
 namespace nfc_rw
 {
     class Program
@@ -51,6 +53,7 @@ namespace nfc_rw
 
         private static PCSCReader reader;
         private static bool modes_changed = false;
+        
 
 
        
@@ -101,6 +104,11 @@ namespace nfc_rw
             {"tg_init","FF000000 27 D4 8C 05 04 00 12 34 56 20 000000000000000000000000000000000000000000000000000000000000"}, //TGINIT DOES NOT GIVE RESPONSE
             {"tg_get_data","FF000000 02 D486"},
             {"tg_set_data","FF000000 {0} D48E {1}"}, //{0} = 2+length of {1}=Command sent from thhe reader
+
+            {"RF_field_off", "FF000000 04 D432 01 00"},
+            {"RF_x", "FF000000 04 D432 01 02"},
+            {"RF_field_on", "FF000000 04 D432 01 03"},
+
 
             //FROM the ACR122_PN53
             //https://code.google.com/p/nfcip-java/source/browse/trunk/nfcip-java/doc/ACR122_PN53x.txt
@@ -197,7 +205,7 @@ namespace nfc_rw
             //Used for easy appending of all found bytes
             var hexbytes = new List<byte>();
 
-
+            
             while (true)
             {
                 value = Convert.ToInt32(byte_num);
@@ -374,13 +382,37 @@ namespace nfc_rw
             byte[] apdu = hex_string_to_byte_array(command);
             byte[] recBuffer = new byte[256];
             int recLen = recBuffer.Length;
+            
             reader.SCard.Transmit(apdu, apdu.Length, recBuffer, ref recLen);
+            //reader.SCard.Control(0,apdu,apdu.Length, recBuffer, recLen, ref returnbytes);
 
             /*foreach (var item in recBuffer)
             {
                 Console.WriteLine(item.ToString());
             }*/
         }
+        static void control_command(string command)
+        {
+            //byte[] apdu = { 0xFF, 0x00, 0x50, 0x00, 0x00 };
+
+            byte[] apdu = hex_string_to_byte_array(command);
+            uint pn532_command = Convert.ToUInt32(reader.SCard.GetSCardCtlCode(3500));
+            
+
+            byte[] recBuffer = new byte[256];
+            int recLen = recBuffer.Length;
+            int returnbytes = 0;
+
+            //reader.SCard.Control(apdu, apdu.Length, recBuffer, ref recLen);
+            reader.SCard.Control(pn532_command, apdu, apdu.Length, recBuffer, recLen, ref returnbytes);
+
+            /*foreach (var item in recBuffer)
+            {
+                Console.WriteLine(item.ToString());
+            }*/
+        }
+
+
         static void try_this()
         {
             direct_command(APDU_commands["injumpfordep"]);
@@ -451,11 +483,11 @@ namespace nfc_rw
 
         static void Main(string[] args)
         {
-            if (args.Length == 0)
-            {
-                Console.WriteLine("no arguments given. Stopping....");
-                System.Environment.Exit(1);
-            }
+            //if (args.Length == 0)
+            //{
+           //     Console.WriteLine("no arguments given. Stopping....");
+           //     System.Environment.Exit(1);
+          //  }
 
             ConsoleTraceListener consoleTraceListener = new ConsoleTraceListener();
             Trace.Listeners.Add(consoleTraceListener);
@@ -483,13 +515,49 @@ namespace nfc_rw
                     //set_buzzer_on();
                     //set_target_mode();
 
+                    /*
                     if(args[0] == "read")
-                    {
-                        Console.WriteLine("Reading from tag");
+                    {*/
+                        Console.WriteLine("Initing stuff");
+                        Console.WriteLine(reader.SCard.GetSCardCtlCode(3500));
                         reader.Connect();
-                        reader.ActivateCard();
+                        Console.WriteLine(reader.SCard.ListReaders()[0]);
+                        //reader.SCard.Connect(reader.SCard.ListReaders()[1], SCARD_SHARE_MODE.Direct, SCARD_PROTOCOL.Default);    
+                        reader.ActivateCard(SCARD_SHARE_MODE.Shared, SCARD_PROTOCOL.T1);
+                        
+                        direct_command(APDU_commands["picc_polling_on"]);
+                        direct_command(APDU_commands["antenna_on"]);
+
+                        set_initiator_mode();
+                        
+
+                        
+                        //reader.Connect();
+                        
+    
+                        //(control_command(APDU_commands["FF 00 48 00 00"]);
+                        
+                        //control_command(APDU_commands["read_register"]);
+                        
+                       // set_initiator_mode();
+                        //set_initiator_mode();
+                        //reader.ActivateCard();
                         message = NdefLibrary.Ndef.NdefMessage.FromByteArray(find_ndef());
                         Console.WriteLine("rd: " + parse_record(message));
+
+                        //RespApdu respApdu = reader.Exchange(APDU_commands["tg_init"]);
+
+                        //direct_command(APDU_commands["tg_init"]);
+                        //direct_command("FF C0 00 00 27");
+
+                        //direct_command(APDU_commands["antenna_off"]);
+                        //direct_command(APDU_commands["picc_polling_off"]);
+                        Console.WriteLine("Please press any key...");
+                        string input_text = Console.ReadLine();
+
+                        //reader.SCard.ReleaseContext();
+                        //direct_command("FF 00 48 00 00");
+                    /*
                     }
                     else if (args[0] == "write" && args.Length == 2)
                     {
@@ -503,7 +571,12 @@ namespace nfc_rw
                     {
                         Console.WriteLine("Bad arguments");
                         System.Environment.Exit(1);
-                    }
+                    }*/
+
+                   //WinSCard yhteys = new WinSCard();
+                   //yhteys.Connect(yhteys.ListReaders()[0]);
+                   //yhteys.Control(0, hex_string_to_byte_array(APDU_commands[]), );
+
 
                     //write_to_tag(input_text = "Hassulla Tassulla kiva paijaa massua ai että kun on hassua:3");
                     //reader.ActivateCard();
@@ -526,7 +599,7 @@ namespace nfc_rw
                     //parse_record(message);
                     //set_initiator_mode();
                     //string input_text = Console.ReadLine();
-                    System.Environment.Exit(1);
+                    //System.Environment.Exit(1);
                 }
                 catch (WinSCardException ex)
                 {
@@ -540,12 +613,12 @@ namespace nfc_rw
                 finally
                 {
                     //direct_command(APDU_commands["enable_picc_polling"]);
-                    
-                    reader.SCard.Disconnect();
                     //turn_off_antenna();
+                    Console.WriteLine("Please press any key...");
                     string input_text = Console.ReadLine();
+                    reader.SCard.Disconnect();
                     System.Environment.Exit(1);
-                    //Console.WriteLine("Please press any key...");
+                    
                     
                 }
             }
