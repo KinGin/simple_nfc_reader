@@ -274,8 +274,8 @@ namespace nfc_rw
             string command_prefix = "FF D6 00 ";
             string command;
             String Hex_address;
-
-            NdefMessage write_this = new NdefMessage {new NdefTextRecord { LanguageCode = "fi", Text = bytes_in } };
+            
+            NdefMessage write_this = new NdefMessage {new NdefUriRecord { Uri = bytes_in } };
             byte[] ndef_prefix = { 0x03, (byte)write_this.ToByteArray().Length };
             List<byte> concat = new List<byte>();
 
@@ -313,7 +313,6 @@ namespace nfc_rw
                     command = command_prefix + Hex_address + " 04 " + HexFormatting.ToHexString(send_chunk, true);
                     Console.WriteLine(command);
                     write_four_bytes = reader.Exchange(command);                  
-                    //send_chunk.
                 }
             }
 
@@ -370,9 +369,11 @@ namespace nfc_rw
         static void turn_off_antenna()
         {
             direct_command(APDU_commands["antenna_off"]);
+            direct_command(APDU_commands["picc_polling_off"]);
         }
         static void turn_on_antenna()
         {
+            direct_command(APDU_commands["picc_polling_on"]);
             direct_command(APDU_commands["antenna_on"]);
         }
         static void direct_command(string command)
@@ -515,63 +516,39 @@ namespace nfc_rw
                     //set_buzzer_on();
                     //set_target_mode();
 
-                    /*
+                    
                     if(args[0] == "read")
-                    {*/
-                        Console.WriteLine("Initing stuff");
-                        Console.WriteLine(reader.SCard.GetSCardCtlCode(3500));
+                    {
+                        //Console.WriteLine("Initing stuff");
+                        //reader.SCard.Connect(reader.SCard.ListReaders()[1], SCARD_SHARE_MODE.Direct, SCARD_PROTOCOL.Default);
+                        //Console.WriteLine(reader.SCard.GetSCardCtlCode(3500));
                         reader.Connect();
                         Console.WriteLine(reader.SCard.ListReaders()[0]);
-                        //reader.SCard.Connect(reader.SCard.ListReaders()[1], SCARD_SHARE_MODE.Direct, SCARD_PROTOCOL.Default);    
                         reader.ActivateCard(SCARD_SHARE_MODE.Shared, SCARD_PROTOCOL.T1);
-                        
-                        direct_command(APDU_commands["picc_polling_on"]);
-                        direct_command(APDU_commands["antenna_on"]);
+                        turn_on_antenna();
 
-                        set_initiator_mode();
-                        
-
-                        
-                        //reader.Connect();
-                        
-    
-                        //(control_command(APDU_commands["FF 00 48 00 00"]);
-                        
-                        //control_command(APDU_commands["read_register"]);
-                        
-                       // set_initiator_mode();
-                        //set_initiator_mode();
-                        //reader.ActivateCard();
                         message = NdefLibrary.Ndef.NdefMessage.FromByteArray(find_ndef());
                         Console.WriteLine("rd: " + parse_record(message));
 
-                        //RespApdu respApdu = reader.Exchange(APDU_commands["tg_init"]);
-
-                        //direct_command(APDU_commands["tg_init"]);
-                        //direct_command("FF C0 00 00 27");
-
-                        //direct_command(APDU_commands["antenna_off"]);
-                        //direct_command(APDU_commands["picc_polling_off"]);
-                        Console.WriteLine("Please press any key...");
-                        string input_text = Console.ReadLine();
-
-                        //reader.SCard.ReleaseContext();
-                        //direct_command("FF 00 48 00 00");
-                    /*
+                        //Console.WriteLine("Please press any key...");
+                        //string input_text = Console.ReadLine();
+                        //turn_off_antenna();
                     }
                     else if (args[0] == "write" && args.Length == 2)
                     {
                         Console.WriteLine("writing to tag: ", args[1]);
                         reader.Connect();
-                        reader.ActivateCard();
+                        reader.ActivateCard(SCARD_SHARE_MODE.Shared, SCARD_PROTOCOL.T1);
+                        turn_on_antenna();
                         write_to_tag(args[1]);
                         Console.WriteLine("wrote to tag:" + args[1]);
                     }
                     else
                     {
                         Console.WriteLine("Bad arguments");
+                        reader.SCard.Disconnect();
                         System.Environment.Exit(1);
-                    }*/
+                    }
 
                    //WinSCard yhteys = new WinSCard();
                    //yhteys.Connect(yhteys.ListReaders()[0]);
@@ -614,8 +591,9 @@ namespace nfc_rw
                 {
                     //direct_command(APDU_commands["enable_picc_polling"]);
                     //turn_off_antenna();
-                    Console.WriteLine("Please press any key...");
-                    string input_text = Console.ReadLine();
+                    //Console.WriteLine("Please press any key...");
+                    //string input_text = Console.ReadLine();
+                    turn_off_antenna();
                     reader.SCard.Disconnect();
                     System.Environment.Exit(1);
                     
