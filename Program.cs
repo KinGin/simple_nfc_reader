@@ -46,12 +46,14 @@ using System.Collections;
 
 
 
+
 namespace nfc_rw
 {
     class Program
     {
 
         private static PCSCReader reader;
+        private static String reader_name;
         private static bool modes_changed = false;
         
 
@@ -484,22 +486,20 @@ namespace nfc_rw
 
         static void Main(string[] args)
         {
-            //if (args.Length == 0)
-            //{
-           //     Console.WriteLine("no arguments given. Stopping....");
-           //     System.Environment.Exit(1);
-          //  }
+            try
+            {
+                System.IO.StreamReader file = new System.IO.StreamReader("settings.txt");
+                reader_name = file.ReadLine();
+                //Console.WriteLine("SETTINGSFILE CONTENT: " + reader_name);
+            }
+            catch (System.IO.FileNotFoundException)
+            {
+                System.Environment.Exit(1);
+            }
+
 
             ConsoleTraceListener consoleTraceListener = new ConsoleTraceListener();
             Trace.Listeners.Add(consoleTraceListener);
-            /*List<string> arguments = new List<string>();
-            arguments.AddRange(args);
-
-            foreach (var item in arguments)
-            {
-                Console.WriteLine(item);
-            }*/
-
             reader = new PCSCReader();
             NdefLibrary.Ndef.NdefMessage message = new NdefLibrary.Ndef.NdefMessage();
 
@@ -522,7 +522,7 @@ namespace nfc_rw
                         //Console.WriteLine("Initing stuff");
                         //reader.SCard.Connect(reader.SCard.ListReaders()[1], SCARD_SHARE_MODE.Direct, SCARD_PROTOCOL.Default);
                         //Console.WriteLine(reader.SCard.GetSCardCtlCode(3500));
-                        reader.Connect();
+                        reader.Connect(reader_name);
                         Console.WriteLine(reader.SCard.ListReaders()[0]);
                         reader.ActivateCard(SCARD_SHARE_MODE.Shared, SCARD_PROTOCOL.T1);
                         turn_on_antenna();
@@ -542,6 +542,11 @@ namespace nfc_rw
                         turn_on_antenna();
                         write_to_tag(args[1]);
                         Console.WriteLine("wrote to tag:" + args[1]);
+                    }
+                    else if (args[0] == "list")
+                    {
+                        Console.WriteLine(reader.SCard.ListReaders());
+                        System.Environment.Exit(1);
                     }
                     else
                     {
